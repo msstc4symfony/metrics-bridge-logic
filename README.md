@@ -1,73 +1,78 @@
-# msstc4symfony/skeleton-bundle
+# msstc4symfony/metrics-bridge-logic
 
-![Build Status](https://github.com/msstc4symfony/skeleton-bundle/actions/workflows/checks.yml/badge.svg?branch=main)
+![Build Status](https://github.com/msstc4symfony/metrics-bridge-logic/actions/workflows/checks.yml/badge.svg?branch=main)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Starter template for msstc4symfony Symfony bundles
-
-<!-- init:start -->
-## Using this template
-
-This block, `bin/init` and its test disappear when the template is initialised.
-
-1. On GitHub: **Use this template → Create a new repository** named `msstc4symfony/<name>-bundle`, then clone it.
-2. `php bin/init OutboxInbox "Transactional outbox and inbox for Messenger"` — PascalCase name without
-   the `Bundle` suffix. It renames the namespace, package, config alias and description, resets the
-   changelog, refreshes `composer-ci.lock` and fails if anything named after the template is left.
-3. The Infection thresholds in `checks.yml` are the template's: re-measure them (`make infection`) for the new bundle.
-   A `vendor/` installed before `bin/init` has the old namespace: rerun `COMPOSER=composer-ci.json composer install`.
-   Then replace the `Greet` example with real code, review `git diff`, then `git add -A && git commit -m "init commit"`.
-4. Green CI, then release `v1.0.0` as usual.
-<!-- init:end -->
+Records every [logic-bundle](https://github.com/msstc4symfony/logic-bundle) Action run as an
+observation of a Prometheus histogram of [metrics-bundle](https://github.com/msstc4symfony/metrics-bundle):
+how long it took and how it ended.
 
 ## Compatibility
 
-| Bundle | PHP  | Symfony  |
-|--------|------|----------|
-| 1.x    | 8.4+ | 7.4, 8.x |
+| Bundle | PHP  | Symfony  | logic-bundle | metrics-bundle |
+|--------|------|----------|--------------|----------------|
+| 1.x    | 8.4+ | 7.4, 8.x | ^1.1         | ^1.3           |
 
 ## Installation
 
-The package is not on Packagist yet, so register its GitHub repository first:
+The packages are not on Packagist yet, so register their GitHub repositories first:
 
 ```sh
-composer config repositories.msstc4symfony-skeleton-bundle vcs https://github.com/msstc4symfony/skeleton-bundle
-composer require msstc4symfony/skeleton-bundle
+composer config repositories.msstc4symfony-logic vcs https://github.com/msstc4symfony/logic-bundle
+composer config repositories.msstc4symfony-metrics vcs https://github.com/msstc4symfony/metrics-bundle
+composer config repositories.msstc4symfony-metrics-bridge-logic vcs https://github.com/msstc4symfony/metrics-bridge-logic
+composer require msstc4symfony/metrics-bridge-logic
 ```
 
-Symfony Flex registers the bundle automatically; without Flex add it to `config/bundles.php`:
+Register the bridge in `config/bundles.php` alongside the two bundles it connects (order does not matter):
 
 ```php
-Msstc4Symfony\SkeletonBundle\SkeletonBundle::class => ['all' => true],
+Msstc4Symfony\MetricsBundle\MetricsBundle::class => ['all' => true],
+Msstc4Symfony\LogicBundle\LogicBundle::class => ['all' => true],
+Msstc4Symfony\MetricsBridgeLogic\MetricsBridgeLogicBundle::class => ['all' => true],
 ```
 
-## Configuration
+Nothing to configure. Without MetricsBundle the container fails to compile with a message naming it.
 
-```yaml
-msstc4symfony_skeleton:
-    greeting: Hello   # non-empty string
+## The metric
+
+| Name                                               | Type      | Labels                                           |
+|----------------------------------------------------|-----------|--------------------------------------------------|
+| `symfony_logic_action_duration_histogram_seconds`  | histogram | `application`, `component`, `action`, `outcome`  |
+
+- Buckets (seconds): `0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30`.
+- `application` / `component` come from the metrics-bundle configuration.
+- `outcome` is `success`, `expected_failure` (an `ExpectedFailureInterface` exception or Symfony's
+  `ValidationFailedException`) or `error` (any other exception), as logic-bundle's `ActionOutcome` classifies it.
+- `action` is the name logic-bundle uses in its logs (`ActionNameResolver`): the Action class, unless an
+  `ActionNameBuilderInterface` service supports it. Register one to get short, stable names such as `order.create`.
+
+The bridge is an Action middleware at priority 400, outside logging (300), validation (200) and lock (100):
+the duration covers the whole pipeline the caller waits for, lock wait included. A failure to record the metric
+is logged as an error and never fails the Action or replaces its exception.
+
+## PromQL
+
+Success rate per Action:
+
+```promql
+sum by (action) (rate(symfony_logic_action_duration_histogram_seconds_count{outcome="success"}[5m]))
+  / sum by (action) (rate(symfony_logic_action_duration_histogram_seconds_count[5m]))
 ```
 
-## Usage
+p95 latency per Action:
 
-```php
-use Msstc4Symfony\SkeletonBundle\Application\Greeting\Greet\Action;
-use Msstc4Symfony\SkeletonBundle\Application\Greeting\Greet\Input;
-
-final readonly class Welcome
-{
-    public function __construct(private Action $greet)
-    {
-    }
-
-    public function __invoke(): string
-    {
-        return ($this->greet)(new Input('Ada'))->message; // "Hello, Ada!"
-    }
-}
+```promql
+histogram_quantile(0.95, sum by (le, action) (rate(symfony_logic_action_duration_histogram_seconds_bucket[5m])))
 ```
+
+With [metrics-bridge-profiling](https://github.com/msstc4symfony/metrics-bridge-profiling) and
+[profiling-bridge-logic](https://github.com/msstc4symfony/profiling-bridge-logic) the same runs also appear as
+spans in `symfony_profiling_span_duration_histogram_seconds`.
 
 ## Local development
+
+`composer-ci.json` installs logic-bundle and metrics-bundle from their GitHub repositories; metrics-bundle needs ext-redis.
 
 ```sh
 make install-ci                        # composer-ci.json profile with every CI tool

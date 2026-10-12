@@ -1,5 +1,5 @@
 {
-  "name": "msstc4symfony/skeleton-bundle",
+  "name": "msstc4symfony/metrics-bridge-logic",
   "license": "MIT",
   "authors": [
     {
@@ -8,26 +8,41 @@
     }
   ],
   "type": "symfony-bundle",
-  "description": "Starter template for msstc4symfony Symfony bundles (CI profile — CI-only tools)",
+  "description": "Exports msstc4symfony/logic-bundle Action outcomes and durations as msstc4symfony/metrics-bundle Prometheus metrics (CI profile — CI-only tools)",
   "minimum-stability": "stable",
   "keywords": [
     "php",
-    "symfony"
+    "symfony",
+    "metrics",
+    "prometheus",
+    "logic"
   ],
   "prefer-stable": true,
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/msstc4symfony/logic-bundle"
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/msstc4symfony/metrics-bundle"
+    }
+  ],
   "autoload": {
     "psr-4": {
-      "Msstc4Symfony\\SkeletonBundle\\": "src/"
+      "Msstc4Symfony\\MetricsBridgeLogic\\": "src/"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "Msstc4Symfony\\SkeletonBundle\\Test\\": "tests/"
+      "Msstc4Symfony\\MetricsBridgeLogic\\Test\\": "tests/"
     }
   },
   "require": {
     "php": ">=8.4",
     "composer-runtime-api": ">=2.2",
+    "msstc4symfony/logic-bundle": "^1.1",
+    "msstc4symfony/metrics-bundle": "^1.3",
     "symfony/config": "^7.4|^8.0",
     "symfony/dependency-injection": "^7.4|^8.0",
     "symfony/http-kernel": "^7.4|^8.0"
@@ -41,9 +56,14 @@
     "phpstan/phpstan-strict-rules": "^2.0",
     "phpstan/phpstan-symfony": "^2.0",
     "phpunit/phpunit": ">=11.0",
+    "promphp/prometheus_client_php": "^2.13",
     "rector/rector": "^2.1",
     "roave/backward-compatibility-check": "^8.20",
-    "roave/security-advisories": "dev-latest"
+    "roave/security-advisories": "dev-latest",
+    "symfony/filesystem": "^7.4|^8.0",
+    "symfony/framework-bundle": "^7.4|^8.0",
+    "symfony/monolog-bundle": "^3.11|^4.0",
+    "symfony/validator": "^7.4|^8.0"
   },
   "config": {
     "allow-plugins": {

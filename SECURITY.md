@@ -13,7 +13,7 @@ Runtime requirements: PHP >= 8.4, Symfony 7.4 / 8.x.
 Do **not** open public issues for security problems. Use:
 
 1. **GitHub Security Advisory** (preferred):
-   <https://github.com/msstc4symfony/skeleton-bundle/security/advisories/new>
+   <https://github.com/msstc4symfony/metrics-bridge-logic/security/advisories/new>
 2. **Email**: `maxim.shamaev@gmail.com`
 
 Include the bundle, PHP and Symfony versions, a reproducer and the impact. You will get an

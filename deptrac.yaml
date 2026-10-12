@@ -41,7 +41,7 @@ deptrac:
         - name: BundleRoot
           collectors:
               - type: classLike
-                value: Msstc4Symfony\\SkeletonBundle\\SkeletonBundle
+                value: Msstc4Symfony\\MetricsBridgeLogic\\MetricsBridgeLogicBundle
 
     ruleset:
         Domain: ~
@@ -60,8 +60,10 @@ deptrac:
         Framework:
             - Domain
             - Application
+        # The compiler pass registers the Infrastructure metric enum with metrics-bundle.
         DependencyInjection:
             - Application
+            - Infrastructure
         # The bundle class may register autoconfiguration for Application interfaces.
         BundleRoot:
             - Application

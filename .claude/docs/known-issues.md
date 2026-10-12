@@ -1,5 +1,22 @@
 # Известные ловушки
 
+- **`AbstractCollector::observeHistogram()` не ловит сбой `MetricRepository::find()`** — try/catch metrics-bundle
+  охватывает только регистрацию и запись. Поэтому `ActionDurationCollector::observe()` оборачивает вызов целиком:
+  сбой метрики не должен ронять Action или подменять его исключение.
+- **`bin/init` шаблона даёт namespace с суффиксом `Bundle`** (`Msstc4Symfony\MetricsBridgeLogicBundle`); у бриджей
+  семейства namespace без суффикса — поправлено вручную в `composer*.json` и `deptrac.yaml`.
+- **`beStrictAboutCoverageMetadata`**: unit-тест, исполняющий `src/Resources/config/services.php`, становится risky
+  под coverage — загрузку сервисов проверяет только kernel-тест (`#[CoversNothing]`).
+- **Эквивалентные мутанты (2):** `parent::build()` в бандле (`AbstractBundle::build()` пуст, вызов оставлен по
+  конвенции семейства) и `?->` у логгера в `ActionDurationCollector` (при `null` ошибку ловит внутренний catch).
+  Отсюда MSI 93 %, пороги CI 90.
+- **`KernelBridgeTest::testTheMiddlewareRunsOutsideLogging` читает приватное `ActionPipeline::$middlewares`**
+  через reflection — публичного API порядка у logic-bundle нет. Если тест упадёт после minor-обновления logic-bundle,
+  сначала проверить, не переименовали ли свойство.
+- **Запись метрики в `finally` не должна бросать.** `MetricsMiddleware::record()` глушит всё, включая сбой
+  пользовательского `ActionNameBuilderInterface` (без guard он ронял бы успешный Action или подменял его исключение);
+  сбой логируется через `ActionDurationCollector::reportFailure()` (класс Action вместо имени), а сам логгер обёрнут,
+  как в `AbstractCollector::processException()`.
 - **`kernel.build_dir` в тестовом контейнере.** `PhpFileLoader` Symfony 7.4 читает этот параметр,
   8.x — нет; без него интеграционные тесты падают только в ячейке 7.4.
 - **Теги для своих интерфейсов** регистрировать в `loadExtension()` через
