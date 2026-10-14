@@ -15,14 +15,14 @@ final class MetricsBridgeLogicBundleTest extends TestCase
 {
     public function testExtensionAliasFollowsTheFamilyNaming(): void
     {
-        self::assertSame('msstc4symfony_metrics_bridge_logic', new MetricsBridgeLogicBundle()->getContainerExtension()?->getAlias());
+        self::assertSame('msstc4symfony_metrics_bridge_logic', (new MetricsBridgeLogicBundle())->getContainerExtension()?->getAlias());
     }
 
     public function testBuildRegistersTheMetricPass(): void
     {
         $container = new ContainerBuilder();
 
-        new MetricsBridgeLogicBundle()->build($container);
+        (new MetricsBridgeLogicBundle())->build($container);
 
         $passes = array_map(get_class(...), $container->getCompilerPassConfig()->getBeforeOptimizationPasses());
         self::assertContains(RegisterLogicMetricsPass::class, $passes);

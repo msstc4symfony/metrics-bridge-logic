@@ -33,7 +33,7 @@ use RuntimeException;
 #[UsesClass(LogicMetric::class)]
 final class MetricsMiddlewareTest extends TestCase
 {
-    private const string METRIC = 'symfony_logic_action_duration_histogram_seconds';
+    private const METRIC = 'symfony_logic_action_duration_histogram_seconds';
 
     private CollectorRegistry $registry;
 
@@ -89,7 +89,7 @@ final class MetricsMiddlewareTest extends TestCase
 
     public function testUsesTheResolvedActionName(): void
     {
-        $names = new ActionNameResolver([new readonly class implements ActionNameBuilderInterface {
+        $names = new ActionNameResolver([new class implements ActionNameBuilderInterface {
             public function build(string $actionClass): string
             {
                 return 'echo';
@@ -150,7 +150,7 @@ final class MetricsMiddlewareTest extends TestCase
         $collector = new ActionDurationCollector($this->registry, new MetricRepository([]), 'app', 'cmp');
         $collector->setLogger($logger);
 
-        new MetricsMiddleware($collector, $this->throwingNames())->handle(new EchoInput(), ActionContext::of(EchoAction::class), static fn (InputInterface $input): OutputInterface => new EchoOutput('ok'));
+        (new MetricsMiddleware($collector, $this->throwingNames()))->handle(new EchoInput(), ActionContext::of(EchoAction::class), static fn (InputInterface $input): OutputInterface => new EchoOutput('ok'));
     }
 
     public function testAThrowingNameBuilderKeepsTheActionException(): void
@@ -169,14 +169,14 @@ final class MetricsMiddlewareTest extends TestCase
     {
         self::assertTrue($this->middleware()->supports(ActionContext::of(EchoAction::class)));
         self::assertSame(400, MetricsMiddleware::PRIORITY);
-        $attribute = new ReflectionClass(MetricsMiddleware::class)->getAttributes(AsActionMiddleware::class)[0] ?? null;
+        $attribute = (new ReflectionClass(MetricsMiddleware::class))->getAttributes(AsActionMiddleware::class)[0] ?? null;
         self::assertNotNull($attribute);
         self::assertSame(400, $attribute->newInstance()->priority);
     }
 
     private function throwingNames(): ActionNameResolver
     {
-        return new ActionNameResolver([new readonly class implements ActionNameBuilderInterface {
+        return new ActionNameResolver([new class implements ActionNameBuilderInterface {
             public function build(string $actionClass): never
             {
                 throw new RuntimeException('name builder down');

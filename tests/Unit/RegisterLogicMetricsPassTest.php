@@ -20,8 +20,8 @@ final class RegisterLogicMetricsPassTest extends TestCase
         $container = new ContainerBuilder();
         $container->setParameter('msstc4symfony_metrics.metric_enums', ['App\Metric']);
 
-        new RegisterLogicMetricsPass()->process($container);
-        new RegisterLogicMetricsPass()->process($container);
+        (new RegisterLogicMetricsPass())->process($container);
+        (new RegisterLogicMetricsPass())->process($container);
 
         self::assertSame(['App\Metric', LogicMetric::class], $container->getParameter('msstc4symfony_metrics.metric_enums'));
     }
@@ -31,7 +31,7 @@ final class RegisterLogicMetricsPassTest extends TestCase
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage(sprintf('MetricsBridgeLogicBundle needs MetricsBundle: register %s in config/bundles.php.', MetricsBundle::class));
 
-        new RegisterLogicMetricsPass()->process(new ContainerBuilder());
+        (new RegisterLogicMetricsPass())->process(new ContainerBuilder());
     }
 
     public function testRejectsANonListParameter(): void
@@ -42,6 +42,6 @@ final class RegisterLogicMetricsPassTest extends TestCase
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('must be a list of enum classes, got string');
 
-        new RegisterLogicMetricsPass()->process($container);
+        (new RegisterLogicMetricsPass())->process($container);
     }
 }

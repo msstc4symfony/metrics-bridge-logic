@@ -20,7 +20,7 @@ use Throwable;
 #[AsActionMiddleware(priority: self::PRIORITY)]
 final readonly class MetricsMiddleware implements ActionMiddlewareInterface
 {
-    public const int PRIORITY = 400;
+    public const PRIORITY = 400;
 
     public function __construct(
         private ActionDurationCollector $collector,

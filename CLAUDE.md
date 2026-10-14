@@ -7,7 +7,7 @@ Guidance for Claude Code in this repository. Deep references live under `.claude
 Symfony bundle (`msstc4symfony/metrics-bridge-logic`, namespace `Msstc4Symfony\MetricsBridgeLogic`, extension alias
 `msstc4symfony_metrics_bridge_logic`, no configuration tree) that connects `msstc4symfony/logic-bundle` to
 `msstc4symfony/metrics-bundle`: every Action run becomes an observation of the
-`logic_action_duration_histogram_seconds` histogram, labelled by Action name and outcome. PHP >= 8.4, Symfony 7.4 / 8.x.
+`logic_action_duration_histogram_seconds` histogram, labelled by Action name and outcome. PHP >= 8.2, Symfony 7.4 / 8.x.
 
 ## Common commands
 

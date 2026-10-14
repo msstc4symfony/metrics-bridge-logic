@@ -20,13 +20,13 @@ use RuntimeException;
 #[UsesClass(LogicMetric::class)]
 final class ActionDurationCollectorTest extends TestCase
 {
-    private const string METRIC = 'symfony_logic_action_duration_histogram_seconds';
+    private const METRIC = 'symfony_logic_action_duration_histogram_seconds';
 
     public function testObservesWithActionAndOutcomeLabels(): void
     {
         $registry = InMemoryRegistry::create();
 
-        new ActionDurationCollector($registry, new MetricRepository([]), 'app', 'cmp')->observe('order.create', ActionOutcome::ExpectedFailure, 0.25);
+        (new ActionDurationCollector($registry, new MetricRepository([]), 'app', 'cmp'))->observe('order.create', ActionOutcome::ExpectedFailure, 0.25);
 
         self::assertSame([[['app', 'cmp', 'order.create', 'expected_failure'], 0.25]], InMemoryRegistry::sums($registry, self::METRIC));
     }
@@ -36,7 +36,7 @@ final class ActionDurationCollectorTest extends TestCase
         $repository = self::createStub(MetricRepositoryInterface::class);
         $repository->method('find')->willThrowException(new RuntimeException('no such metric'));
 
-        new ActionDurationCollector(InMemoryRegistry::create(), $repository, 'app', 'cmp')->observe('x', ActionOutcome::Success, 0.1);
+        (new ActionDurationCollector(InMemoryRegistry::create(), $repository, 'app', 'cmp'))->observe('x', ActionOutcome::Success, 0.1);
 
         $this->addToAssertionCount(1);
     }
