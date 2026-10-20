@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Msstc4Symfony\MetricsBridgeLogic\DependencyInjection\Compiler;
+namespace Msstc4Symfony\MetricsBridgeLogic\DependencyInjection\CompilerPass;
 
 use LogicException;
 use Msstc4Symfony\MetricsBridgeLogic\Infrastructure\Metrics\LogicMetric;
@@ -11,6 +11,9 @@ use Override;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
+/**
+ * @internal
+ */
 final class RegisterLogicMetricsPass implements CompilerPassInterface
 {
     private const METRIC_ENUMS_PARAMETER = 'msstc4symfony_metrics.metric_enums';

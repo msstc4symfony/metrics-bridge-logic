@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Msstc4Symfony\MetricsBridgeLogic\Test\Unit;
 
 use LogicException;
-use Msstc4Symfony\MetricsBridgeLogic\DependencyInjection\Compiler\RegisterLogicMetricsPass;
+use Msstc4Symfony\MetricsBridgeLogic\DependencyInjection\CompilerPass\RegisterLogicMetricsPass;
 use Msstc4Symfony\MetricsBridgeLogic\Infrastructure\Metrics\LogicMetric;
 use Msstc4Symfony\MetricsBundle\MetricsBundle;
 use PHPUnit\Framework\Attributes\CoversClass;

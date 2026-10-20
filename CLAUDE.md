@@ -21,12 +21,12 @@ Develop against the CI profile: `COMPOSER=composer-ci.json composer install` (ne
 ## Architecture in 60 seconds
 
 - `Infrastructure\Metrics\LogicMetric` — the single declaration of the metric (name, labels, buckets).
-- `Infrastructure\Metrics\ActionDurationCollector` (extends metrics' `AbstractCollector`) — swallows and logs
-  any failure, including the metric lookup metrics-bundle does not guard.
+- `Infrastructure\Metrics\ActionDurationCollector` (`@internal`) — records through metrics 2.0's
+  `MetricRecorderInterface`; swallows and logs (channel `metrics_bundle`) anything the recorder throws.
 - `Infrastructure\Metrics\MetricsMiddleware` — logic-bundle `ActionMiddlewareInterface`, priority 400 (outside
   logging 300); name from `ActionNameResolver`, outcome from `ActionOutcome::of()`, rethrows the same exception;
   any recording failure (a throwing name builder included) goes to `ActionDurationCollector::reportFailure()`.
-- `DependencyInjection\Compiler\RegisterLogicMetricsPass` appends the enum to `msstc4symfony_metrics.metric_enums`;
+- `DependencyInjection\CompilerPass\RegisterLogicMetricsPass` appends the enum to `msstc4symfony_metrics.metric_enums`;
   without MetricsBundle it throws.
 
 Details: `.claude/docs/architecture.md`. **Read `.claude/docs/known-issues.md` before chasing a

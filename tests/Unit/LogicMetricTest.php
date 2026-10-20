@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Msstc4Symfony\MetricsBridgeLogic\Test\Unit;
 
 use Msstc4Symfony\MetricsBridgeLogic\Infrastructure\Metrics\LogicMetric;
-use Msstc4Symfony\MetricsBundle\Infrastructure\Entity\Label;
-use Msstc4Symfony\MetricsBundle\Infrastructure\Enum\MetricTypeEnum;
+use Msstc4Symfony\MetricsBundle\Application\Metric\Label;
+use Msstc4Symfony\MetricsBundle\Application\Metric\MetricType;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -18,7 +18,7 @@ final class LogicMetricTest extends TestCase
         $metric = LogicMetric::ACTION_DURATION;
 
         self::assertSame('logic_action_duration_histogram_seconds', $metric->value);
-        self::assertSame(MetricTypeEnum::HISTOGRAM, $metric->getType());
+        self::assertSame(MetricType::HISTOGRAM, $metric->getType());
         self::assertSame('Application action duration in seconds by outcome', $metric->getDescription());
         self::assertSame(['action', 'outcome'], array_map(static fn (Label $label): string => $label->name, $metric->getLabels()));
         self::assertSame('success, expected_failure, error', $metric->getLabels()[1]->description);

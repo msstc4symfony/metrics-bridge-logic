@@ -1,8 +1,11 @@
 # Известные ловушки
 
-- **`AbstractCollector::observeHistogram()` не ловит сбой `MetricRepository::find()`** — try/catch metrics-bundle
-  охватывает только регистрацию и запись. Поэтому `ActionDurationCollector::observe()` оборачивает вызов целиком:
-  сбой метрики не должен ронять Action или подменять его исключение.
+- **`MetricRecorderInterface` глушит только сбой хранилища** (metrics 2.0): неподходящий тип — `InvalidArgumentException`;
+  незарегистрированное определение не бросает (`MetricRepository::find()` строит метрику из enum), но чужая реализация
+  порта может бросить что угодно. Поэтому `ActionDurationCollector::observe()` оборачивает
+  вызов целиком: сбой метрики не должен ронять Action или подменять его исключение.
+- **Лог сбоя — в канал `metrics_bundle`**, а не `app` (2.0): канал не декорируется счётчиком ошибок metrics, иначе
+  сбой записи метрики считался бы как ошибка приложения.
 - **`bin/init` шаблона даёт namespace с суффиксом `Bundle`** (`Msstc4Symfony\MetricsBridgeLogicBundle`); у бриджей
   семейства namespace без суффикса — поправлено вручную в `composer*.json` и `deptrac.yaml`.
 - **`beStrictAboutCoverageMetadata`**: unit-тест, исполняющий `src/Resources/config/services.php`, становится risky
@@ -16,7 +19,7 @@
 - **Запись метрики в `finally` не должна бросать.** `MetricsMiddleware::record()` глушит всё, включая сбой
   пользовательского `ActionNameBuilderInterface` (без guard он ронял бы успешный Action или подменял его исключение);
   сбой логируется через `ActionDurationCollector::reportFailure()` (класс Action вместо имени), а сам логгер обёрнут,
-  как в `AbstractCollector::processException()`.
+  как в metrics-bundle.
 - **`kernel.build_dir` в тестовом контейнере.** `PhpFileLoader` Symfony 7.4 читает этот параметр,
   8.x — нет; без него интеграционные тесты падают только в ячейке 7.4.
 - **Теги для своих интерфейсов** регистрировать в `loadExtension()` через

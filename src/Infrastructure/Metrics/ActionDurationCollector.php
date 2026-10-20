@@ -4,24 +4,40 @@ declare(strict_types=1);
 
 namespace Msstc4Symfony\MetricsBridgeLogic\Infrastructure\Metrics;
 
+use Monolog\Attribute\WithMonologChannel;
 use Msstc4Symfony\LogicBundle\Application\Action\ActionOutcome;
-use Msstc4Symfony\MetricsBundle\Infrastructure\Collector\AbstractCollector;
+use Msstc4Symfony\MetricsBundle\Application\LogChannel;
+use Msstc4Symfony\MetricsBundle\Application\Port\MetricRecorderInterface;
+use Psr\Log\LoggerInterface;
 use Throwable;
 
-final class ActionDurationCollector extends AbstractCollector
+/**
+ * Logs to metrics-bundle's channel: the application's error counter does not count it, so a failing metric
+ * never feeds back into the metrics.
+ *
+ * @internal
+ */
+#[WithMonologChannel(LogChannel::NAME)]
+final readonly class ActionDurationCollector
 {
+    public function __construct(
+        private MetricRecorderInterface $recorder,
+        private ?LoggerInterface $logger = null,
+    ) {
+    }
+
     public function observe(string $action, ActionOutcome $outcome, float $seconds): void
     {
         try {
-            $this->observeHistogram(LogicMetric::ACTION_DURATION, $seconds, [$action, $outcome->value]);
+            $this->recorder->observe(LogicMetric::ACTION_DURATION, $seconds, [$action, $outcome->value]);
         } catch (Throwable $exception) {
-            // metrics-bundle guards only the storage call; a failing metric lookup must not fail the Action.
+            // The recorder logs storage failures itself; a definition it cannot use must not fail the Action either.
             $this->reportFailure($action, $exception);
         }
     }
 
     /**
-     * @internal for MetricsMiddleware: $action may be the Action class when its name could not be resolved
+     * For MetricsMiddleware: $action may be the Action class when its name could not be resolved.
      */
     public function reportFailure(string $action, Throwable $exception): void
     {
@@ -32,7 +48,7 @@ final class ActionDurationCollector extends AbstractCollector
                 'exception' => $exception,
             ]);
         } catch (Throwable) {
-            // Logger failures must not break the Action either, as in AbstractCollector::processException().
+            // Logger failures must not break the Action either.
         }
     }
 }

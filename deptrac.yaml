@@ -41,30 +41,15 @@ deptrac:
         - name: BundleRoot
           collectors:
               - type: classLike
-                value: Msstc4Symfony\\MetricsBridgeLogic\\MetricsBridgeLogicBundle
+                value: '^Msstc4Symfony\\MetricsBridgeLogic\\MetricsBridgeLogicBundle$'
 
     ruleset:
-        Domain: ~
-        DomainService:
-            - Domain
-        Application:
-            - Domain
-            - DomainService
-        # Adapters implement Domain repositories and Application ports.
-        Infrastructure:
-            - Domain
-            - Application
-        Presentation:
-            - Domain
-            - Application
-        Framework:
-            - Domain
-            - Application
-        # The compiler pass registers the Infrastructure metric enum with metrics-bundle.
+        # The Action middleware, its collector and the metric definition depend on nothing else in the bridge.
+        Infrastructure: ~
+
+        # The compiler pass appends the metric definition to metrics-bundle's enum list.
         DependencyInjection:
-            - Application
             - Infrastructure
-        # The bundle class may register autoconfiguration for Application interfaces.
+
         BundleRoot:
-            - Application
             - DependencyInjection

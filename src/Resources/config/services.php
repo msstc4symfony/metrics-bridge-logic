@@ -10,9 +10,6 @@ return static function (ContainerConfigurator $container): void {
     $services = $container->services();
     $services->defaults()->autowire()->autoconfigure();
 
-    $services->set(ActionDurationCollector::class)
-        ->arg('$applicationName', '%msstc4symfony_metrics.application_name%')
-        ->arg('$componentName', '%msstc4symfony_metrics.component_name%')
-    ;
+    $services->set(ActionDurationCollector::class);
     $services->set(MetricsMiddleware::class);
 };

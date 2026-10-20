@@ -5,20 +5,20 @@ declare(strict_types=1);
 namespace Msstc4Symfony\MetricsBridgeLogic\Infrastructure\Metrics;
 
 use Msstc4Symfony\LogicBundle\Application\Action\ActionOutcome;
-use Msstc4Symfony\MetricsBundle\Infrastructure\Entity\Label;
-use Msstc4Symfony\MetricsBundle\Infrastructure\Enum\MetricLabelEnumInterface;
-use Msstc4Symfony\MetricsBundle\Infrastructure\Enum\MetricLabelTypeEnum;
-use Msstc4Symfony\MetricsBundle\Infrastructure\Enum\MetricTypeEnum;
+use Msstc4Symfony\MetricsBundle\Application\Metric\Label;
+use Msstc4Symfony\MetricsBundle\Application\Metric\LabelType;
+use Msstc4Symfony\MetricsBundle\Application\Metric\MetricDefinitionInterface;
+use Msstc4Symfony\MetricsBundle\Application\Metric\MetricType;
 use Override;
 
-enum LogicMetric: string implements MetricLabelEnumInterface
+enum LogicMetric: string implements MetricDefinitionInterface
 {
     case ACTION_DURATION = 'logic_action_duration_histogram_seconds';
 
     #[Override]
-    public function getType(): MetricTypeEnum
+    public function getType(): MetricType
     {
-        return MetricTypeEnum::HISTOGRAM;
+        return MetricType::HISTOGRAM;
     }
 
     #[Override]
@@ -31,8 +31,8 @@ enum LogicMetric: string implements MetricLabelEnumInterface
     public function getLabels(): array
     {
         return [
-            new Label('action', MetricLabelTypeEnum::STRING, 'Action name, as in the logs'),
-            new Label('outcome', MetricLabelTypeEnum::STRING, self::outcomeValues()),
+            new Label('action', LabelType::STRING, 'Action name, as in the logs'),
+            new Label('outcome', LabelType::STRING, self::outcomeValues()),
         ];
     }
 

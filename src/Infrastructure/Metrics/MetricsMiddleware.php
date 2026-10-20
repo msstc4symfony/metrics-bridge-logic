@@ -12,10 +12,13 @@ use Msstc4Symfony\LogicBundle\Application\Action\OutputInterface;
 use Msstc4Symfony\LogicBundle\Application\Pipeline\ActionContext;
 use Msstc4Symfony\LogicBundle\Application\Pipeline\ActionMiddlewareInterface;
 use Msstc4Symfony\LogicBundle\Application\Pipeline\Attribute\AsActionMiddleware;
+use Override;
 use Throwable;
 
 /**
  * Outside logging, so the duration covers validation and the lock wait the caller sees.
+ *
+ * @internal
  */
 #[AsActionMiddleware(priority: self::PRIORITY)]
 final readonly class MetricsMiddleware implements ActionMiddlewareInterface
@@ -28,11 +31,13 @@ final readonly class MetricsMiddleware implements ActionMiddlewareInterface
     ) {
     }
 
+    #[Override]
     public function supports(ActionContext $context): bool
     {
         return true;
     }
 
+    #[Override]
     public function handle(InputInterface $input, ActionContext $context, Closure $next): OutputInterface
     {
         $start = hrtime(true);

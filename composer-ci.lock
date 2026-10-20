@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2691d02bcad375e4f7cceabc81f7bd68",
+    "content-hash": "ab19cbc141bf5619da095e951f4bdccc",
     "packages": [
         {
             "name": "monolog/monolog",
@@ -113,16 +113,16 @@
         },
         {
             "name": "msstc4symfony/logic-bundle",
-            "version": "v1.2.0",
+            "version": "v1.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/msstc4symfony/logic-bundle.git",
-                "reference": "8e9152a8b6e1f11d46d2526643a6cbcefe6136bd"
+                "reference": "acab50177f3c7191fd0994103f8bd8f212ce359e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/msstc4symfony/logic-bundle/zipball/8e9152a8b6e1f11d46d2526643a6cbcefe6136bd",
-                "reference": "8e9152a8b6e1f11d46d2526643a6cbcefe6136bd",
+                "url": "https://api.github.com/repos/msstc4symfony/logic-bundle/zipball/acab50177f3c7191fd0994103f8bd8f212ce359e",
+                "reference": "acab50177f3c7191fd0994103f8bd8f212ce359e",
                 "shasum": ""
             },
             "require": {
@@ -183,22 +183,22 @@
                 "use-case"
             ],
             "support": {
-                "source": "https://github.com/msstc4symfony/logic-bundle/tree/v1.2.0"
+                "source": "https://github.com/msstc4symfony/logic-bundle/tree/v1.3.0"
             },
-            "time": "2026-10-14T16:15:27+00:00"
+            "time": "2026-10-19T06:51:05+00:00"
         },
         {
             "name": "msstc4symfony/metrics-bundle",
-            "version": "v1.4.0",
+            "version": "v2.0.0-rc.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/msstc4symfony/metrics-bundle.git",
-                "reference": "3dd038181b22d962007133f2aba3b423bf7b39ed"
+                "reference": "6c576f14149507abc6c6e90db1b65cc6f6f7bc03"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/msstc4symfony/metrics-bundle/zipball/3dd038181b22d962007133f2aba3b423bf7b39ed",
-                "reference": "3dd038181b22d962007133f2aba3b423bf7b39ed",
+                "url": "https://api.github.com/repos/msstc4symfony/metrics-bundle/zipball/6c576f14149507abc6c6e90db1b65cc6f6f7bc03",
+                "reference": "6c576f14149507abc6c6e90db1b65cc6f6f7bc03",
                 "shasum": ""
             },
             "require": {
@@ -272,9 +272,9 @@
                 "symfony"
             ],
             "support": {
-                "source": "https://github.com/msstc4symfony/metrics-bundle/tree/v1.4.0"
+                "source": "https://github.com/msstc4symfony/metrics-bundle/tree/v2.0.0-rc.1"
             },
-            "time": "2026-10-14T16:52:55+00:00"
+            "time": "2026-10-19T11:11:53+00:00"
         },
         {
             "name": "promphp/prometheus_client_php",
@@ -12515,6 +12515,7 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
+        "msstc4symfony/metrics-bundle": 5,
         "roave/security-advisories": 20
     },
     "prefer-stable": true,

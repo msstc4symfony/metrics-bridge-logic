@@ -17,13 +17,11 @@ use Msstc4Symfony\MetricsBridgeLogic\Infrastructure\Metrics\MetricsMiddleware;
 use Msstc4Symfony\MetricsBridgeLogic\Test\Fixtures\EchoAction;
 use Msstc4Symfony\MetricsBridgeLogic\Test\Fixtures\EchoInput;
 use Msstc4Symfony\MetricsBridgeLogic\Test\Fixtures\EchoOutput;
-use Msstc4Symfony\MetricsBridgeLogic\Test\Fixtures\InMemoryRegistry;
-use Msstc4Symfony\MetricsBundle\Infrastructure\Repository\MetricRepository;
-use Msstc4Symfony\MetricsBundle\Infrastructure\Repository\MetricRepositoryInterface;
+use Msstc4Symfony\MetricsBridgeLogic\Test\Fixtures\RecordingMetricRecorder;
+use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use Prometheus\CollectorRegistry;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
 use RuntimeException;
@@ -33,13 +31,12 @@ use RuntimeException;
 #[UsesClass(LogicMetric::class)]
 final class MetricsMiddlewareTest extends TestCase
 {
-    private const METRIC = 'symfony_logic_action_duration_histogram_seconds';
+    private RecordingMetricRecorder $recorder;
 
-    private CollectorRegistry $registry;
-
+    #[Override]
     protected function setUp(): void
     {
-        $this->registry = InMemoryRegistry::create();
+        $this->recorder = new RecordingMetricRecorder();
     }
 
     public function testRecordsASuccessAndReturnsTheSameOutput(): void
@@ -53,10 +50,9 @@ final class MetricsMiddlewareTest extends TestCase
         });
 
         self::assertSame($output, $result);
-        self::assertSame([[['app', 'cmp', EchoAction::class, 'success'], 1.0]], InMemoryRegistry::counts($this->registry, self::METRIC));
-        $sums = InMemoryRegistry::sums($this->registry, self::METRIC);
-        self::assertGreaterThanOrEqual(0.001, $sums[0][1] ?? 0.0);
-        self::assertLessThan(1.0, $sums[0][1] ?? 1.0);
+        self::assertSame([[EchoAction::class, 'success']], $this->recordedLabels());
+        self::assertGreaterThanOrEqual(0.001, $this->recorder->calls[0]['value'] ?? 0.0);
+        self::assertLessThan(1.0, $this->recorder->calls[0]['value'] ?? 1.0);
     }
 
     public function testRethrowsTheSameExceptionAndRecordsError(): void
@@ -70,7 +66,7 @@ final class MetricsMiddlewareTest extends TestCase
             self::assertSame($failure, $caught);
         }
 
-        self::assertSame([[['app', 'cmp', EchoAction::class, 'error'], 1.0]], InMemoryRegistry::counts($this->registry, self::METRIC));
+        self::assertSame([[EchoAction::class, 'error']], $this->recordedLabels());
     }
 
     public function testRecordsAnExpectedFailureAndRethrowsIt(): void
@@ -84,17 +80,19 @@ final class MetricsMiddlewareTest extends TestCase
             self::assertSame($failure, $caught);
         }
 
-        self::assertSame([[['app', 'cmp', EchoAction::class, 'expected_failure'], 1.0]], InMemoryRegistry::counts($this->registry, self::METRIC));
+        self::assertSame([[EchoAction::class, 'expected_failure']], $this->recordedLabels());
     }
 
     public function testUsesTheResolvedActionName(): void
     {
         $names = new ActionNameResolver([new class implements ActionNameBuilderInterface {
+            #[Override]
             public function build(string $actionClass): string
             {
                 return 'echo';
             }
 
+            #[Override]
             public function supports(string $actionClass): bool
             {
                 return true;
@@ -103,14 +101,12 @@ final class MetricsMiddlewareTest extends TestCase
 
         $this->middleware($names)->handle(new EchoInput(), ActionContext::of(EchoAction::class), static fn (InputInterface $input): OutputInterface => new EchoOutput('ok'));
 
-        self::assertSame([[['app', 'cmp', 'echo', 'success'], 1.0]], InMemoryRegistry::counts($this->registry, self::METRIC));
+        self::assertSame([['echo', 'success']], $this->recordedLabels());
     }
 
     public function testACollectorFailureDoesNotFailTheAction(): void
     {
-        $repository = self::createStub(MetricRepositoryInterface::class);
-        $repository->method('find')->willThrowException(new RuntimeException('metrics down'));
-        $middleware = new MetricsMiddleware(new ActionDurationCollector($this->registry, $repository, 'app', 'cmp'), new ActionNameResolver());
+        $middleware = new MetricsMiddleware(new ActionDurationCollector(new RecordingMetricRecorder(new RuntimeException('metrics down'))), new ActionNameResolver());
         $output = new EchoOutput('ok');
 
         self::assertSame($output, $middleware->handle(new EchoInput(), ActionContext::of(EchoAction::class), static fn (InputInterface $input): OutputInterface => $output));
@@ -118,9 +114,7 @@ final class MetricsMiddlewareTest extends TestCase
 
     public function testACollectorFailureKeepsTheActionException(): void
     {
-        $repository = self::createStub(MetricRepositoryInterface::class);
-        $repository->method('find')->willThrowException(new RuntimeException('metrics down'));
-        $middleware = new MetricsMiddleware(new ActionDurationCollector($this->registry, $repository, 'app', 'cmp'), new ActionNameResolver());
+        $middleware = new MetricsMiddleware(new ActionDurationCollector(new RecordingMetricRecorder(new RuntimeException('metrics down'))), new ActionNameResolver());
         $failure = new RuntimeException('boom');
 
         try {
@@ -147,8 +141,7 @@ final class MetricsMiddlewareTest extends TestCase
                 && $context['exception'] instanceof RuntimeException
                 && $context['exception']->getMessage() === 'name builder down',
         ));
-        $collector = new ActionDurationCollector($this->registry, new MetricRepository([]), 'app', 'cmp');
-        $collector->setLogger($logger);
+        $collector = new ActionDurationCollector($this->recorder, $logger);
 
         (new MetricsMiddleware($collector, $this->throwingNames()))->handle(new EchoInput(), ActionContext::of(EchoAction::class), static fn (InputInterface $input): OutputInterface => new EchoOutput('ok'));
     }
@@ -177,11 +170,13 @@ final class MetricsMiddlewareTest extends TestCase
     private function throwingNames(): ActionNameResolver
     {
         return new ActionNameResolver([new class implements ActionNameBuilderInterface {
+            #[Override]
             public function build(string $actionClass): never
             {
                 throw new RuntimeException('name builder down');
             }
 
+            #[Override]
             public function supports(string $actionClass): bool
             {
                 return true;
@@ -191,6 +186,14 @@ final class MetricsMiddlewareTest extends TestCase
 
     private function middleware(?ActionNameResolver $names = null): MetricsMiddleware
     {
-        return new MetricsMiddleware(new ActionDurationCollector($this->registry, new MetricRepository([]), 'app', 'cmp'), $names ?? new ActionNameResolver());
+        return new MetricsMiddleware(new ActionDurationCollector($this->recorder), $names ?? new ActionNameResolver());
+    }
+
+    /**
+     * @return list<list<scalar>>
+     */
+    private function recordedLabels(): array
+    {
+        return array_map(static fn (array $call): array => $call['labels'], $this->recorder->calls);
     }
 }

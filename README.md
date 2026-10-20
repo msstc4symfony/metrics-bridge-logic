@@ -11,8 +11,12 @@ how long it took and how it ended.
 
 | Bundle | PHP  | Symfony  | logic-bundle | metrics-bundle |
 |--------|------|----------|--------------|----------------|
-| 1.1+   | 8.2+ | 7.4, 8.x | ^1.2         | ^1.4           |
+| 2.0    | 8.2+ | 7.4, 8.x | ^1.3         | ^2.0@rc        |
+| 1.1    | 8.2+ | 7.4, 8.x | ^1.2         | ^1.4           |
 | 1.0    | 8.4+ | 7.4, 8.x | ^1.1         | ^1.3           |
+
+While metrics-bundle 2.0 is a release candidate, require it with `@rc` (or set `minimum-stability: RC` with
+`prefer-stable: true`): a stability flag in a dependency's `require` does not reach the root package.
 
 Symfony 8.x needs PHP 8.4; on PHP 8.2 and 8.3 Composer installs Symfony 7.4.
 
@@ -52,7 +56,8 @@ Nothing to configure. Without MetricsBundle the container fails to compile with 
 
 The bridge is an Action middleware at priority 400, outside logging (300), validation (200) and lock (100):
 the duration covers the whole pipeline the caller waits for, lock wait included. A failure to record the metric
-is logged as an error and never fails the Action or replaces its exception.
+is logged as an error to metrics-bundle's `metrics_bundle` channel (not counted by `symfony_error`) and never fails
+the Action or replaces its exception.
 
 ## PromQL
 
@@ -72,6 +77,12 @@ histogram_quantile(0.95, sum by (le, action) (rate(symfony_logic_action_duration
 With [metrics-bridge-profiling](https://github.com/msstc4symfony/metrics-bridge-profiling) and
 [profiling-bridge-logic](https://github.com/msstc4symfony/profiling-bridge-logic) the same runs also appear as
 spans in `symfony_profiling_span_duration_histogram_seconds`.
+
+## Public API
+
+The bundle class `Msstc4Symfony\MetricsBridgeLogic\MetricsBridgeLogicBundle` and the metric definition
+`Msstc4Symfony\MetricsBridgeLogic\Infrastructure\Metrics\LogicMetric` (its name, labels and buckets are what
+dashboards rely on). The collector, the middleware and the compiler pass are `@internal`.
 
 ## Local development
 

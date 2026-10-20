@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Msstc4Symfony\MetricsBridgeLogic;
 
-use Msstc4Symfony\MetricsBridgeLogic\DependencyInjection\Compiler\RegisterLogicMetricsPass;
+use Msstc4Symfony\MetricsBridgeLogic\DependencyInjection\CompilerPass\RegisterLogicMetricsPass;
 use Override;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;

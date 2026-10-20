@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Msstc4Symfony\MetricsBridgeLogic\Test\Integration;
 
+use Monolog\Logger;
 use Msstc4Symfony\LogicBundle\Application\Logging\LoggingMiddleware;
 use Msstc4Symfony\LogicBundle\Application\Pipeline\ActionPipeline;
+use Msstc4Symfony\MetricsBridgeLogic\Infrastructure\Metrics\ActionDurationCollector;
 use Msstc4Symfony\MetricsBridgeLogic\Infrastructure\Metrics\LogicMetric;
 use Msstc4Symfony\MetricsBridgeLogic\Infrastructure\Metrics\MetricsMiddleware;
 use Msstc4Symfony\MetricsBridgeLogic\Test\Fixtures\EchoAction;
@@ -14,6 +16,8 @@ use Msstc4Symfony\MetricsBridgeLogic\Test\Fixtures\ExceptionHandlerSnapshot;
 use Msstc4Symfony\MetricsBridgeLogic\Test\Fixtures\FailingAction;
 use Msstc4Symfony\MetricsBridgeLogic\Test\Fixtures\InMemoryRegistry;
 use Msstc4Symfony\MetricsBridgeLogic\Test\Integration\Kernel\TestKernel;
+use Msstc4Symfony\MetricsBundle\Application\LogChannel;
+use Override;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use Prometheus\CollectorRegistry;
@@ -35,6 +39,7 @@ final class KernelBridgeTest extends TestCase
 
     private ExceptionHandlerSnapshot $exceptionHandlers;
 
+    #[Override]
     protected function setUp(): void
     {
         // trigger_deprecation() silences its notice with @, which PHPUnit ignores; record it directly.
@@ -51,6 +56,7 @@ final class KernelBridgeTest extends TestCase
         $this->kernel->boot();
     }
 
+    #[Override]
     protected function tearDown(): void
     {
         restore_error_handler();
@@ -117,6 +123,28 @@ final class KernelBridgeTest extends TestCase
         self::assertIsInt($metrics);
         self::assertIsInt($logging);
         self::assertLessThan($logging, $metrics);
+    }
+
+    public function testTheCollectorLogsToTheUndecoratedMetricsChannel(): void
+    {
+        // Reaches the private collector through the pipeline: a monolog-bundle change could drop the channel silently.
+        $pipeline = $this->container()->get(EchoAction::class);
+        self::assertInstanceOf(ActionPipeline::class, $pipeline);
+        $middlewares = (new ReflectionProperty($pipeline, 'middlewares'))->getValue($pipeline);
+        self::assertIsIterable($middlewares);
+        $middleware = null;
+        foreach ($middlewares as $candidate) {
+            if ($candidate instanceof MetricsMiddleware) {
+                $middleware = $candidate;
+            }
+        }
+
+        self::assertInstanceOf(MetricsMiddleware::class, $middleware);
+        $collector = (new ReflectionProperty($middleware, 'collector'))->getValue($middleware);
+        self::assertInstanceOf(ActionDurationCollector::class, $collector);
+        $logger = (new ReflectionProperty($collector, 'logger'))->getValue($collector);
+        self::assertInstanceOf(Logger::class, $logger);
+        self::assertSame(LogChannel::NAME, $logger->getName());
     }
 
     private function registry(): CollectorRegistry
