@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.0 - 2026-10-20
+
+- Changed: requires the final 2.0 releases (`^2.0` instead of `^2.0@rc`).
+
 ## 2.0.0-rc.1 - 2026-10-20
 
 - Changed: requires metrics-bundle ^2.0 (`^2.0@rc` until metrics 2.0.0 is final): `LogicMetric` implements
