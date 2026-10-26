@@ -13,9 +13,9 @@
 - **Эквивалентные мутанты (2):** `parent::build()` в бандле (`AbstractBundle::build()` пуст, вызов оставлен по
   конвенции семейства) и `?->` у логгера в `ActionDurationCollector` (при `null` ошибку ловит внутренний catch).
   Отсюда MSI 93 %, пороги CI 90.
-- **`KernelBridgeTest::testTheMiddlewareRunsOutsideLogging` читает приватное `ActionPipeline::$middlewares`**
-  через reflection — публичного API порядка у logic-bundle нет. Если тест упадёт после minor-обновления logic-bundle,
-  сначала проверить, не переименовали ли свойство.
+- **`KernelBridgeTest` читает порядок middleware через `MiddlewareChainInterface::middlewares()`** (logic-bundle
+  2.1.0; раньше — рефлексией по приватному `ActionPipeline::$middlewares`). При logic < 2.1 (prefer-lowest на 1.3) такие
+  тесты помечаются skipped, ограничение `^1.3|^2.0` не поднято.
 - **Запись метрики в `finally` не должна бросать.** `MetricsMiddleware::record()` глушит всё, включая сбой
   пользовательского `ActionNameBuilderInterface` (без guard он ронял бы успешный Action или подменял его исключение);
   сбой логируется через `ActionDurationCollector::reportFailure()` (класс Action вместо имени), а сам логгер обёрнут,

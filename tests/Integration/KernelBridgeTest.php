@@ -6,7 +6,8 @@ namespace Msstc4Symfony\MetricsBridgeLogic\Test\Integration;
 
 use Monolog\Logger;
 use Msstc4Symfony\LogicBundle\Application\Logging\LoggingMiddleware;
-use Msstc4Symfony\LogicBundle\Application\Pipeline\ActionPipeline;
+use Msstc4Symfony\LogicBundle\Application\Pipeline\ActionMiddlewareInterface;
+use Msstc4Symfony\LogicBundle\Application\Pipeline\MiddlewareChainInterface;
 use Msstc4Symfony\MetricsBridgeLogic\Infrastructure\Metrics\ActionDurationCollector;
 use Msstc4Symfony\MetricsBridgeLogic\Infrastructure\Metrics\LogicMetric;
 use Msstc4Symfony\MetricsBridgeLogic\Infrastructure\Metrics\MetricsMiddleware;
@@ -107,16 +108,7 @@ final class KernelBridgeTest extends TestCase
 
     public function testTheMiddlewareRunsOutsideLogging(): void
     {
-        // Reads ActionPipeline's private middleware list: logic-bundle exposes no public order; see known-issues.md.
-        $pipeline = $this->container()->get(EchoAction::class);
-        self::assertInstanceOf(ActionPipeline::class, $pipeline);
-        $middlewares = (new ReflectionProperty($pipeline, 'middlewares'))->getValue($pipeline);
-        self::assertIsIterable($middlewares);
-        $classes = [];
-        foreach ($middlewares as $middleware) {
-            self::assertIsObject($middleware);
-            $classes[] = $middleware::class;
-        }
+        $classes = array_map(static fn (object $middleware): string => $middleware::class, $this->middlewares());
 
         $metrics = array_search(MetricsMiddleware::class, $classes, true);
         $logging = array_search(LoggingMiddleware::class, $classes, true);
@@ -127,18 +119,8 @@ final class KernelBridgeTest extends TestCase
 
     public function testTheCollectorLogsToTheUndecoratedMetricsChannel(): void
     {
-        // Reaches the private collector through the pipeline: a monolog-bundle change could drop the channel silently.
-        $pipeline = $this->container()->get(EchoAction::class);
-        self::assertInstanceOf(ActionPipeline::class, $pipeline);
-        $middlewares = (new ReflectionProperty($pipeline, 'middlewares'))->getValue($pipeline);
-        self::assertIsIterable($middlewares);
-        $middleware = null;
-        foreach ($middlewares as $candidate) {
-            if ($candidate instanceof MetricsMiddleware) {
-                $middleware = $candidate;
-            }
-        }
-
+        // Reaches the private collector: a monolog-bundle change could drop the channel silently.
+        $middleware = $this->container()->get(MetricsMiddleware::class);
         self::assertInstanceOf(MetricsMiddleware::class, $middleware);
         $collector = (new ReflectionProperty($middleware, 'collector'))->getValue($middleware);
         self::assertInstanceOf(ActionDurationCollector::class, $collector);
@@ -161,5 +143,20 @@ final class KernelBridgeTest extends TestCase
         self::assertInstanceOf(ContainerInterface::class, $container);
 
         return $container;
+    }
+
+    /**
+     * @return list<ActionMiddlewareInterface>
+     */
+    private function middlewares(): array
+    {
+        if (!interface_exists(MiddlewareChainInterface::class)) {
+            self::markTestSkipped('logic-bundle exposes the middleware order from 2.1 on.');
+        }
+
+        $action = $this->container()->get(EchoAction::class);
+        self::assertInstanceOf(MiddlewareChainInterface::class, $action);
+
+        return $action->middlewares();
     }
 }
